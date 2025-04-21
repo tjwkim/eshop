@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}장바구니 | 자동차 부품 쇼핑몰{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">장바구니</h1>
+    
+    {% if cart_items %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">상품명</th>
+                    <th scope="col">가격</th>
+                    <th scope="col">수량</th>
+                    <th scope="col">합계</th>
+                    <th scope="col">액션</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>
+                        <form action="{{ url_for('cart.update_cart') }}" method="post" class="d-flex align-items-center">
+                            <input type="hidden" name="product_id" value="{{ item.id }}">
+                            <div class="input-group input-group-sm" style="width: 100px;">
+                                <button class="btn btn-outline-secondary" type="button" onclick="decrementQuantity(this)">-</button>
+                                <input type="number" name="quantity" class="form-control text-center" value="{{ item.quantity }}" min="1" max="10">
+                                <button class="btn btn-outline-secondary" type="button" onclick="incrementQuantity(this)">+</button>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-outline-primary ms-2">업데이트</button>
+                        </form>
+                    </td>
+                    <td>${{ item.item_total }}</td>
+                    <td>
+                        <form action="{{ url_for('cart.remove_from_cart') }}" method="post">
+                            <input type="hidden" name="product_id" value="{{ item.id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i> 제거
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3" class="text-end"><strong>총 금액:</strong></td>
+                    <td>${{ total_price }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 쇼핑 계속하기
+            </a>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-primary" onclick="alert('결제 기능은 아직 구현되지 않았습니다.')">
+                결제하기 <i class="bi bi-credit-card"></i>
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p class="mb-0">장바구니가 비어있습니다. <a href="{{ url_for('main.index') }}">쇼핑을 시작하세요!</a></p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function incrementQuantity(btn) {
+        const input = btn.previousElementSibling;
+        const currentValue = parseInt(input.value);
+        if (currentValue < 10) {
+            input.value = currentValue + 1;
+        }
+    }
+    
+    function decrementQuantity(btn) {
+        const input = btn.nextElementSibling;
+        const currentValue = parseInt(input.value);
+        if (currentValue > 1) {
+            input.value = currentValue - 1;
+        }
+    }
+</script>
+{% endblock %}

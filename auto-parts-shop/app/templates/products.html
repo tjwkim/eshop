@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}상품 목록 | 자동차 부품 쇼핑몰{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 필터 사이드바 -->
+    <div class="col-md-3">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">필터</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('main.index') }}" method="get">
+                    {% if search_query %}
+                    <input type="hidden" name="search" value="{{ search_query }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="min_price" class="form-label">최소 가격:</label>
+                        <input type="number" class="form-control" id="min_price" name="min_price" 
+                               value="{{ min_price or '' }}" step="0.01" min="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="max_price" class="form-label">최대 가격:</label>
+                        <input type="number" class="form-control" id="max_price" name="max_price" 
+                               value="{{ max_price or '' }}" step="0.01" min="0">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="manufacturer" class="form-label">제조사:</label>
+                        <select class="form-select" id="manufacturer" name="manufacturer">
+                            <option value="">모든 제조사</option>
+                            {% for m in manufacturers %}
+                            <option value="{{ m }}" {% if manufacturer == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sort_by" class="form-label">정렬 기준:</label>
+                        <select class="form-select" id="sort_by" name="sort_by">
+                            <option value="price" {% if sort_by == 'price' %}selected{% endif %}>가격</option>
+                            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>이름</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sort_order" class="form-label">정렬 방향:</label>
+                        <select class="form-select" id="sort_order" name="sort_order">
+                            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>오름차순</option>
+                            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>내림차순</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">적용</button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary w-100 mt-2">필터 초기화</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 상품 목록 -->
+    <div class="col-md-9">
+        <h1 class="mb-4">자동차 부품 상품 목록</h1>
+
+        {% if search_query %}
+        <div class="mb-3">
+            <h5>"{{ search_query }}" 검색 결과</h5>
+            <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">검색 초기화</a>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            {% for part in parts %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="position-relative">
+                        <div class="position-absolute top-0 end-0 p-2">
+                            <button class="btn btn-sm btn-outline-danger add-to-wishlist" 
+                                    data-product-id="{{ part.id }}">
+                                <i class="bi bi-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ part.name }}</h5>
+                        <p class="card-text text-truncate">{{ part.description }}</p>
+                        <p class="card-text"><strong>제조사:</strong> {{ part.manufacturer }}</p>
+                        <p class="card-text"><strong>가격:</strong> ${{ part.price }}</p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <a href="{{ url_for('main.product_detail', product_id=part.id) }}" class="btn btn-sm btn-outline-primary">상세 정보</a>
+                        <form action="{{ url_for('cart.add_to_cart') }}" method="post">
+                            <input type="hidden" name="product_id" value="{{ part.id }}">
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-sm btn-primary">장바구니 추가</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    검색 결과가 없습니다.
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 페이지네이션 -->
+        <nav aria-label="페이지 네비게이션">
+            <ul class="pagination justify-content-center">
+                {% if page > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.index', page=page-1, search=search_query, min_price=min_price, max_price=max_price, manufacturer=manufacturer, sort_by=sort_by, sort_order=sort_order) }}">이전</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">이전</span>
+                </li>
+                {% endif %}
+
+                {% for p in range(1, total_pages + 1) %}
+                <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.index', page=p, search=search_query, min_price=min_price, max_price=max_price, manufacturer=manufacturer, sort_by=sort_by, sort_order=sort_order) }}">{{ p }}</a>
+                </li>
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.index', page=page+1, search=search_query, min_price=min_price, max_price=max_price, manufacturer=manufacturer, sort_by=sort_by, sort_order=sort_order) }}">다음</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">다음</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}
